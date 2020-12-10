@@ -13,8 +13,7 @@ import simplehttpserver.SimpleHandler;
  *
  * @author arlan
  */
-public class Handler01 extends SimpleHandler {
-
+public class BasicHandler extends SimpleHandler {
     @Override
     public void onGET(SimpleExchange e) throws IOException {
         e.sendResponse("That is a GET request!");

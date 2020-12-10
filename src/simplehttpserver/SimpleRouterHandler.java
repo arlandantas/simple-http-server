@@ -21,7 +21,7 @@ public class SimpleRouterHandler implements HttpHandler {
     private final HashMap<String, HttpHandler> rotas = new HashMap<>();
     
     public void addRoute (String rota, HttpHandler handler) {
-        this.rotas.put(rota, handler);
+        this.rotas.put(rota+(rota.endsWith("/") ? "?" : "\\/?"), handler);
     }
     
     public String[] getRoutes () {
@@ -36,7 +36,7 @@ public class SimpleRouterHandler implements HttpHandler {
         try {
             String uri = e.getRequestURI().getPath();
             for (String rota : rotas.keySet()) {
-                String regex = "^"+rota+(rota.endsWith("/") ? "" : "\\/?")+"$";
+                String regex = "^"+rota+"$";
                 if (uri.matches(regex)) {
                     e.setAttribute("regex_rota", regex);
                     rotas.get(rota).handle(e);

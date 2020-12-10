@@ -98,7 +98,7 @@ public class SimpleExchange {
     public String getRouteParam (int group_index) {
         Matcher m = Pattern.compile(this.regex_rota, Pattern.CASE_INSENSITIVE)
                 .matcher(this.exchange.getRequestURI().toString());
-        return m.matches() ? m.group(group_index) : null;
+        return m.matches() && m.groupCount() > group_index+1 ? m.group(group_index+1) : null;
     }
     
     public String getRouteParam (String group_name) {
