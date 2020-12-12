@@ -56,7 +56,7 @@ public class SimpleExchange {
                         String[] pp = p.trim().split("=", 2);
                         detalhes.put(pp[0], pp.length > 1 ? pp[1] : "1");
                     }
-
+                    String[] body_parts;
                     switch (type[0]) {
                         case "application/json":
                             if (!body.equals("null")) {
@@ -68,7 +68,7 @@ public class SimpleExchange {
                             }
                             break;
                         case "application/x-www-form-urlencoded":
-                            String[] body_parts = body.split("(\\?|\\&)");
+                            body_parts = body.split("(\\?|\\&)");
                             for (String body_part : body_parts) {
                                 if ("".equals(body_part)) continue;
                                 String[] parts =  body_part.split("\\=", 2);
@@ -76,6 +76,31 @@ public class SimpleExchange {
                             }
                             break;
                         case "multipart/form-data":
+//                            this.inputs.put("Divisor", detalhes.get("boundary"));
+                            body_parts = body.split("\\-*"+(detalhes.get("boundary").replaceAll("\\-*", ""))+"(--)?");
+                            int i = 0;
+                            for (String body_part : body_parts) {
+//                                this.inputs.put("body"+i, body_part);
+                                if ("".equals(body_part) || body_part.matches("^(\\n|\\ |\\r)+$")) continue;
+                                String[] lines =  body_part.replaceAll("((\\n|\\ |\\r)+$)|(^(\\n|\\r|\\ )+)", "").split("\\n", 3);
+//                                Matcher m = Pattern.compile("^Content-Disposition: (?<type>.*);.*name=\\\"(?<name>.*)\\\".*",
+                                Matcher m = Pattern.compile(".*Content-Disposition:(\\ )?(?<type>.*);.*name(\\ )?=(\\ )?\\\"(?<name>.*)\\\".*",
+                                        Pattern.CASE_INSENSITIVE).matcher(body_part);
+                                if (m.matches()) {
+//                                    this.inputs.put(m.group("name"), lines[2]);
+                                    System.out.println("Campo: "+i);
+                                } else {
+                                    System.out.println("Campo inválido: "+i);
+                                }
+                                for (int j = 0; j < lines.length; j++) {
+                                    this.inputs.put("linha"+i+"."+j, lines[j]);
+                                    System.out.println("linha"+i+"."+j);
+                                    System.out.println(lines[j]);
+                                }
+                                ++i;
+//                                String[] params = lines[0].split(";");
+                            }
+                            break;
                         default:
                             this.sendResponse("Media Type not supported yet", 415);
                             break;
