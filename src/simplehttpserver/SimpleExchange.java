@@ -29,11 +29,17 @@ public class SimpleExchange {
     private int code = 200;
     private final String regex_rota;
     private final HashMap<String, Object> inputs = new HashMap<>();
+    private final String raw_body;
     
-    public SimpleExchange (HttpExchange e) {
+    public SimpleExchange (HttpExchange e) throws IOException {
         this.exchange = e;
         this.regex_rota = (String) e.getAttribute("regex_rota");
+        this.raw_body = new String(e.getRequestBody().readAllBytes());
         this.fillInputs();
+    }
+    
+    public final String getRawBody () throws IOException {
+        return this.raw_body;
     }
     
     public final void fillInputs () {
@@ -47,9 +53,7 @@ public class SimpleExchange {
                 }
             }
             if ("POST".equals(exchange.getRequestMethod())) {
-                InputStream is = exchange.getRequestBody();
-                String body = new String(is.readAllBytes());
-                if (body.length() > 0) {
+                if (this.raw_body.length() > 0) {
                     String[] type = exchange.getRequestHeaders().getFirst("Content-Type").split(";");
                     HashMap<String, String> detalhes = new HashMap<>();
                     for (String p : type) {
@@ -59,8 +63,8 @@ public class SimpleExchange {
                     String[] body_parts;
                     switch (type[0]) {
                         case "application/json":
-                            if (!body.equals("null")) {
-                                JSONObject obj = new JSONObject(body);
+                            if (!this.raw_body.equals("null")) {
+                                JSONObject obj = new JSONObject(raw_body);
                                 for (Iterator iterator = obj.keys(); iterator.hasNext();) {
                                     String key = (String) iterator.next();
                                     this.inputs.put(key, obj.get(key));
@@ -68,7 +72,7 @@ public class SimpleExchange {
                             }
                             break;
                         case "application/x-www-form-urlencoded":
-                            body_parts = body.split("(\\?|\\&)");
+                            body_parts = this.raw_body.split("(\\?|\\&)");
                             for (String body_part : body_parts) {
                                 if ("".equals(body_part)) continue;
                                 String[] parts =  body_part.split("\\=", 2);
@@ -77,28 +81,20 @@ public class SimpleExchange {
                             break;
                         case "multipart/form-data":
 //                            this.inputs.put("Divisor", detalhes.get("boundary"));
-                            body_parts = body.split("\\-*"+(detalhes.get("boundary").replaceAll("\\-*", ""))+"(--)?");
+                            body_parts = this.raw_body.split("\\-*"+(detalhes.get("boundary").replaceAll("\\-*", ""))+"(--)?");
                             int i = 0;
                             for (String body_part : body_parts) {
-//                                this.inputs.put("body"+i, body_part);
                                 if ("".equals(body_part) || body_part.matches("^(\\n|\\ |\\r)+$")) continue;
-                                String[] lines =  body_part.replaceAll("((\\n|\\ |\\r)+$)|(^(\\n|\\r|\\ )+)", "").split("\\n", 3);
-//                                Matcher m = Pattern.compile("^Content-Disposition: (?<type>.*);.*name=\\\"(?<name>.*)\\\".*",
-                                Matcher m = Pattern.compile(".*Content-Disposition:(\\ )?(?<type>.*);.*name(\\ )?=(\\ )?\\\"(?<name>.*)\\\".*",
-                                        Pattern.CASE_INSENSITIVE).matcher(body_part);
+                                String[] lines =  body_part.replaceAll("((\\n|\\ |\\r)+$)|(^(\\n|\\r|\\ )+)", "").split("(\\r\\n)|(\\n)", 3);
+                                Matcher m = Pattern.compile(".*Content-Disposition:(\\ )?(?<type>.*);.*\\ name(\\ )?=(\\ )?\\\"(?<name>.*)\\\".*",
+                                        Pattern.CASE_INSENSITIVE).matcher(lines[0]);
                                 if (m.matches()) {
-//                                    this.inputs.put(m.group("name"), lines[2]);
-                                    System.out.println("Campo: "+i);
+                                    this.inputs.put(m.group("name"), lines[2]);
+                                    System.out.println(m.group("name")+": "+lines[2]);
                                 } else {
                                     System.out.println("Campo inválido: "+i);
                                 }
-                                for (int j = 0; j < lines.length; j++) {
-                                    this.inputs.put("linha"+i+"."+j, lines[j]);
-                                    System.out.println("linha"+i+"."+j);
-                                    System.out.println(lines[j]);
-                                }
                                 ++i;
-//                                String[] params = lines[0].split(";");
                             }
                             break;
                         default:
