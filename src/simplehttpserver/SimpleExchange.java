@@ -6,6 +6,7 @@
 package simplehttpserver;
 
 import com.sun.net.httpserver.HttpExchange;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -85,12 +86,25 @@ public class SimpleExchange {
                             int i = 0;
                             for (String body_part : body_parts) {
                                 if ("".equals(body_part) || body_part.matches("^(\\n|\\ |\\r)+$")) continue;
-                                String[] lines =  body_part.replaceAll("((\\n|\\ |\\r)+$)|(^(\\n|\\r|\\ )+)", "").split("(\\r\\n)|(\\n)", 3);
-                                Matcher m = Pattern.compile(".*Content-Disposition:(\\ )?(?<type>.*);.*\\ name(\\ )?=(\\ )?\\\"(?<name>.*)\\\".*",
+                                String[] lines =  body_part.replaceAll("((\\n|\\ |\\r)+$)|(^(\\n|\\r|\\ )+)", "").split("(\\r\\n)|(\\n)");
+                                Matcher m = Pattern.compile(".*Content-Disposition:(\\ )?(?<type>.*);.*\\ name(\\ )?=(\\ )?\\\"(?<name>[^\\\"]*)\\\".*",
                                         Pattern.CASE_INSENSITIVE).matcher(lines[0]);
                                 if (m.matches()) {
-                                    this.inputs.put(m.group("name"), lines[2]);
-                                    System.out.println(m.group("name")+": "+lines[2]);
+                                    if (lines[1].startsWith("Content-Type")) {
+                                        String full_data = lines[3];
+                                        for (int j = 4; j < lines.length; j++) {
+                                            full_data += "\n"+lines[j];
+                                        }
+                                        this.inputs.put(m.group("name"), full_data.getBytes());
+                                        System.out.println(m.group("name")+": "+((byte[])this.inputs.get(m.group("name"))).toString());
+                                    } else {
+                                        String full_data = lines[2];
+                                        for (int j = 3; j < lines.length; j++) {
+                                            full_data += "\n"+lines[j];
+                                        }
+                                        this.inputs.put(m.group("name"), full_data);
+                                        System.out.println(m.group("name")+": "+full_data);
+                                    }
                                 } else {
                                     System.out.println("Campo inválido: "+i);
                                 }

@@ -21,13 +21,13 @@ public class BasicHandler extends SimpleHandler {
 
     @Override
     public void onPOST(SimpleExchange e) throws IOException {
-        String type = e.getExchange().getRequestHeaders().getFirst("Content-Type");
-        String ret = type+"\n$$$\n";
-        for (String k : e.getInputs().keySet()) {
-            ret += k+": "+e.getInput(k)+"\n";
-        }
-        e.sendResponse(ret);
-//        e.sendResponse("That is a POST request!");
+//        String type = e.getExchange().getRequestHeaders().getFirst("Content-Type");
+//        String ret = type+"\n$$$\n";
+//        for (String k : e.getInputs().keySet()) {
+//            ret += k+": "+e.getInput(k)+"\n";
+//        }
+//        e.sendResponse(ret);
+        e.sendResponse(e.getRawBody());
     }
 
     @Override
