@@ -5,7 +5,11 @@
  */
 package simplehttpserver.examples.handlers;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import simplehttpserver.SimpleExchange;
 import simplehttpserver.SimpleHandler;
 
@@ -27,6 +31,19 @@ public class BasicHandler extends SimpleHandler {
 //            ret += k+": "+e.getInput(k)+"\n";
 //        }
 //        e.sendResponse(ret);
+//        try {
+//            OutputStream os = new FileOutputStream("/home/arlan/upload.pdf");
+//            byte[] data = (byte[]) e.getInput("File1");
+//            os.write(data);
+//            os.close();
+////            FileWriter myWriter = new FileWriter("/home/arlan/upload.docx");
+////            myWriter.write("lala);
+////            myWriter.close();
+//            System.out.println("Successfully wrote to the file.");
+//        } catch (IOException ex) {
+//            System.out.println("An error occurred.");
+//            ex.printStackTrace();
+//        }
         e.sendResponse(e.getRawBody());
     }
 
