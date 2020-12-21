@@ -81,44 +81,26 @@ public class SimpleExchange {
                             }
                             break;
                         case "multipart/form-data":
-//                            this.inputs.put("Divisor", detalhes.get("boundary"));
                             body_parts = this.raw_body.split("\\-*"+(detalhes.get("boundary").replaceAll("\\-*", ""))+"(--)?");
                             int i = 0;
-                            String pattern = ".*Content-Disposition:(\\ )?(?<type>.*);.*\\ name(\\ )?=(\\ )?\\\"(?<name>[^\\\"]*)\\\"(.|\\n)*"+
-                                "(Content-type: (?<contenttype>.*).*(\\r?\\n)*(?<conteudo>.*))?";
+                            String pattern = ".*Content-Disposition:\\ ?(?<type>[^;\\n]*)(?:;\\ ?name\\ ?=\\ ?\\\"(?<name>[^\\\"]*)\\\")(?:;\\ ?filename\\ ?=\\ ?\\\"(?<filename>[^\\\"]*)\\\")?(?:\\r?\\nContent-Type:\\ (?<contenttype>.*))?\\r?\\n\\r?\\n(?<conteudo>(.|\\n)*)";
                             System.out.println(pattern);
                             for (String body_part : body_parts) {
                                 if ("".equals(body_part) || body_part.matches("^(\\n|\\ |\\r)+$")) continue;
-//                                Matcher m = Pattern.compile(".*Content-Disposition:(\\ )?(?<type>.*);.*\\ name(\\ )?=(\\ )?\\\"(?<name>[^\\\"]*)\\\"(.|\\n)*"+
-//                                        "Content-type: (?<contenttype>.*).*(\\r?\\n){,2}(?<conteudo>.*)",
-//                                        Pattern.CASE_INSENSITIVE).matcher(body_part);
-                                String[] lines =  body_part.replaceAll("((\\n|\\ |\\r)+$)|(^(\\n|\\r|\\ )+)", "").split("(\\r\\n)|(\\n)");
-                                Matcher m = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(body_part);
+                                String all_lines =  body_part.replaceAll("((\\n|\\r|\\ )+$)|(^(\\n|\\r|\\ )+)", "");
+                                String[] lines =  body_part.replaceAll("((\\n|\\r|\\ )+$)|(^(\\n|\\r|\\ )+)", "").split("\n");
+                                Matcher m = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(all_lines);
                                 if (m.matches()) {
+                                    System.out.println("-----------------------");
+                                    System.out.println(m.group("name"));
                                     System.out.println(m.group("type"));
+                                    System.out.println(m.group("filename"));
+                                    System.out.println(m.group("contenttype"));
+                                    System.out.println(m.group("conteudo"));
+                                    this.inputs.put(m.group("name"), m.group("conteudo"));
                                 } else {
                                     System.out.println("Not Matching!");
                                 }
-//                                System.out.println(m.group("name"));
-//                                if (m.matches()) {
-//                                    if (lines[1].startsWith("Content-Type")) {
-//                                        String full_data = lines[3];
-//                                        for (int j = 4; j < lines.length; j++) {
-//                                            full_data += "\n"+lines[j];
-//                                        }
-//                                        this.inputs.put(m.group("name"), full_data.getBytes());
-//                                        System.out.println(m.group("name")+": "+new String((byte[])this.inputs.get(m.group("name"))));
-//                                    } else {
-//                                        String full_data = lines[2];
-//                                        for (int j = 3; j < lines.length; j++) {
-//                                            full_data += "\n"+lines[j];
-//                                        }
-//                                        this.inputs.put(m.group("name"), full_data);
-//                                        System.out.println(m.group("name")+": "+full_data);
-//                                    }
-//                                } else {
-//                                    System.out.println("Campo inválido: "+i);
-//                                }
                                 ++i;
                             }
                             break;
