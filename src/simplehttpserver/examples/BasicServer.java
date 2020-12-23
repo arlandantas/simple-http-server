@@ -5,6 +5,7 @@
  */
 package simplehttpserver.examples;
 
+import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,7 +34,7 @@ public class BasicServer {
             // SimpleHTTPServer server = new SimpleHTTPServer(8000, "/var/www/myjavaproject");
             
             // Or serve static files from a zip file inside src
-            // Parsing the relative zip path and the path to serve content
+            // Parsing the relative zip path and the route to serve that content
             // The following example will serve the index.html inside the zip file on /index.html route
             server.addStaticZip("staticFiles.zip", "/");
             
@@ -49,6 +50,25 @@ public class BasicServer {
             
             // Routes can redirect to another one using the SimpleRedirectHandler
             server.addRoute("/number", new SimpleRedirectHandler("/123"));
+            
+            // Routes can redirect to another one using the SimpleRedirectHandler
+            server.addRoute("/todos", "*", new SimpleRunnable() {
+                @Override
+                public void run(SimpleExchange e) {
+                    try {
+                        e.sendResponse("Esse é um método com wildcard!!");
+                    } catch (IOException ex) {
+                        e.getExchange().close();
+                        Logger.getLogger(BasicServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            });
+            server.addRoute("/teste", "POST", new SimpleRunnable() {
+                @Override
+                public void run(SimpleExchange e) {
+                    e.sendResponse("Esse é um POST com runnable!!");
+                }
+            });
             
             // Starts your server
             server.start();

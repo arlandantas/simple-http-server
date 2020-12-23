@@ -69,6 +69,10 @@ public class SimpleHTTPServer {
         this.handler.addRoute(regex_route, handler);
     }
     
+    public void addRoute(String regex_route, String method, SimpleRunnable handler) {
+        this.handler.addRoute(regex_route, method, handler);
+    }
+    
     public String[] getRoutes () {
         return this.handler.getRoutes();
     }
