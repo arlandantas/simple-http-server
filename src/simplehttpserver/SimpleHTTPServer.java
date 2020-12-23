@@ -23,6 +23,9 @@ public class SimpleHTTPServer {
     private final int port;
     private final SimpleRouterHandler handler;
     
+    public static final int POST = 1, GET = 2, PUT = 4, DELETE = 8, HEAD = 16,
+            CONNECT = 32, OPTIONS = 64, TRACE = 128, PATCH = 256, ALL = 512;
+    
     public SimpleHTTPServer (int port) throws IOException {
         this.port = port;
         this.server = HttpServer.create(new InetSocketAddress(this.port), 0);
@@ -69,8 +72,56 @@ public class SimpleHTTPServer {
         this.handler.addRoute(regex_route, handler);
     }
     
-    public void addRoute(String regex_route, String method, SimpleRunnable handler) {
+    public void addRoute(String regex_route, SimpleRunnable handler) {
+        this.handler.addRoute(regex_route, "*", handler);
+    }
+    
+    private void addRoute(String regex_route, String method, SimpleRunnable handler) {
         this.handler.addRoute(regex_route, method, handler);
+    }
+    
+    public void addRoute(String regex_route, int methods, SimpleRunnable handler) {
+        // POST = 1, GET = 2, PUT = 4, DELETE = 8, HEAD = 16, CONNECT = 32, OPTIONS = 64, TRACE = 128, PATCH = 256
+        if (methods >= SimpleHTTPServer.ALL) {
+            this.addRoute(regex_route, "*", handler);
+            methods -= SimpleHTTPServer.ALL;
+        }
+        if (methods >= SimpleHTTPServer.PATCH) {
+            this.addRoute(regex_route, "PATCH", handler);
+            methods -= SimpleHTTPServer.PATCH;
+        }
+        if (methods >= SimpleHTTPServer.TRACE) {
+            this.addRoute(regex_route, "TRACE", handler);
+            methods -= SimpleHTTPServer.TRACE;
+        }
+        if (methods >= SimpleHTTPServer.OPTIONS) {
+            this.addRoute(regex_route, "OPTIONS", handler);
+            methods -= SimpleHTTPServer.OPTIONS;
+        }
+        if (methods >= SimpleHTTPServer.CONNECT) {
+            this.addRoute(regex_route, "CONNECT", handler);
+            methods -= SimpleHTTPServer.CONNECT;
+        }
+        if (methods >= SimpleHTTPServer.HEAD) {
+            this.addRoute(regex_route, "HEAD", handler);
+            methods -= SimpleHTTPServer.HEAD;
+        }
+        if (methods >= SimpleHTTPServer.DELETE) {
+            this.addRoute(regex_route, "DELETE", handler);
+            methods -= SimpleHTTPServer.DELETE;
+        }
+        if (methods >= SimpleHTTPServer.PUT) {
+            this.addRoute(regex_route, "PUT", handler);
+            methods -= SimpleHTTPServer.PUT;
+        }
+        if (methods >= SimpleHTTPServer.GET) {
+            this.addRoute(regex_route, "GET", handler);
+            methods -= SimpleHTTPServer.GET;
+        }
+        if (methods >= SimpleHTTPServer.POST) {
+            this.addRoute(regex_route, "POST", handler);
+            methods -= SimpleHTTPServer.POST;
+        }
     }
     
     public String[] getRoutes () {

@@ -45,7 +45,7 @@ public class SimpleRouterHandler implements HttpHandler {
                 String uri_method = e.getRequestMethod()+":"+e.getRequestURI().getPath();
                 String regex = "^"+rota+"$";
                 if (uri_method.matches(regex)) {
-                    e.setAttribute("regex_rota", regex);
+                    e.setAttribute("regex_rota", "^"+rota.split(":")[1]+"$");
                     rotas_metodos.get(rota).run(new SimpleExchange(e));
                     return;
                 }
@@ -55,7 +55,7 @@ public class SimpleRouterHandler implements HttpHandler {
                 String uri_method = "*:"+e.getRequestURI().getPath();
                 String regex = "^"+rota+"$";
                 if (uri_method.matches(regex)) {
-                    e.setAttribute("regex_rota", regex);
+                    e.setAttribute("regex_rota", "^"+rota.split(":")[1]+"$");
                     rotas_metodos.get(rota).run(new SimpleExchange(e));
                     return;
                 }
