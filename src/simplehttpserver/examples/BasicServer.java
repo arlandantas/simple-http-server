@@ -5,16 +5,10 @@
  */
 package simplehttpserver.examples;
 
-import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import simplehttpserver.*;
-import simplehttpserver.examples.handlers.BasicHandler;
-import simplehttpserver.examples.handlers.NamedRouteParamHandler;
-import simplehttpserver.examples.handlers.RouteParamHandler;
 
 /**
  *
@@ -36,7 +30,7 @@ public class BasicServer {
             // Or serve static files from a zip file inside src
             // Parsing the relative zip path and the route to serve that content
             // The following example will serve the index.html inside the zip file on /index.html route
-            server.addStaticZip("staticFiles.zip", "/");
+            server.addStaticZip("simplehttpserver/examples/staticFiles.zip", "/");
             
             // Add routes, parsing the SimpleRunnable that will receive the requests on that route            
             server.addRoute("/", BasicServer.Runnable001);
