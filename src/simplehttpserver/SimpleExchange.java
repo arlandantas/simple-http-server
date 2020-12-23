@@ -6,6 +6,7 @@
 package simplehttpserver;
 
 import com.sun.net.httpserver.HttpExchange;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,11 +30,17 @@ public class SimpleExchange {
     private int code = 200;
     private final String regex_rota;
     private final HashMap<String, Object> inputs = new HashMap<>();
+    private final String raw_body;
     
-    public SimpleExchange (HttpExchange e) {
+    public SimpleExchange (HttpExchange e) throws IOException {
         this.exchange = e;
         this.regex_rota = (String) e.getAttribute("regex_rota");
+        this.raw_body = new String(e.getRequestBody().readAllBytes());
         this.fillInputs();
+    }
+    
+    public final String getRawBody () throws IOException {
+        return this.raw_body;
     }
     
     public final void fillInputs () {
@@ -47,20 +54,18 @@ public class SimpleExchange {
                 }
             }
             if ("POST".equals(exchange.getRequestMethod())) {
-                InputStream is = exchange.getRequestBody();
-                String body = new String(is.readAllBytes());
-                if (body.length() > 0) {
+                if (this.raw_body.length() > 0) {
                     String[] type = exchange.getRequestHeaders().getFirst("Content-Type").split(";");
                     HashMap<String, String> detalhes = new HashMap<>();
                     for (String p : type) {
                         String[] pp = p.trim().split("=", 2);
                         detalhes.put(pp[0], pp.length > 1 ? pp[1] : "1");
                     }
-
+                    String[] body_parts;
                     switch (type[0]) {
                         case "application/json":
-                            if (!body.equals("null")) {
-                                JSONObject obj = new JSONObject(body);
+                            if (!this.raw_body.equals("null")) {
+                                JSONObject obj = new JSONObject(raw_body);
                                 for (Iterator iterator = obj.keys(); iterator.hasNext();) {
                                     String key = (String) iterator.next();
                                     this.inputs.put(key, obj.get(key));
@@ -68,7 +73,7 @@ public class SimpleExchange {
                             }
                             break;
                         case "application/x-www-form-urlencoded":
-                            String[] body_parts = body.split("(\\?|\\&)");
+                            body_parts = this.raw_body.split("(\\?|\\&)");
                             for (String body_part : body_parts) {
                                 if ("".equals(body_part)) continue;
                                 String[] parts =  body_part.split("\\=", 2);
@@ -76,6 +81,29 @@ public class SimpleExchange {
                             }
                             break;
                         case "multipart/form-data":
+                            body_parts = this.raw_body.split("\\-*"+(detalhes.get("boundary").replaceAll("\\-*", ""))+"(--)?");
+                            int i = 0;
+                            String pattern = ".*Content-Disposition:\\ ?(?<type>[^;\\n]*)(?:;\\ ?name\\ ?=\\ ?\\\"(?<name>[^\\\"]*)\\\")(?:;\\ ?filename\\ ?=\\ ?\\\"(?<filename>[^\\\"]*)\\\")?(?:\\r?\\nContent-Type:\\ (?<contenttype>.*))?\\r?\\n\\r?\\n(?<conteudo>(.|\\n)*)";
+                            System.out.println(pattern);
+                            for (String body_part : body_parts) {
+                                if ("".equals(body_part) || body_part.matches("^(\\n|\\ |\\r)+$")) continue;
+                                String all_lines =  body_part.replaceAll("((\\n|\\r|\\ )+$)|(^(\\n|\\r|\\ )+)", "");
+                                String[] lines =  body_part.replaceAll("((\\n|\\r|\\ )+$)|(^(\\n|\\r|\\ )+)", "").split("\n");
+                                Matcher m = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(all_lines);
+                                if (m.matches()) {
+                                    System.out.println("-----------------------");
+                                    System.out.println(m.group("name"));
+                                    System.out.println(m.group("type"));
+                                    System.out.println(m.group("filename"));
+                                    System.out.println(m.group("contenttype"));
+                                    System.out.println(m.group("conteudo"));
+                                    this.inputs.put(m.group("name"), m.group("conteudo"));
+                                } else {
+                                    System.out.println("Not Matching!");
+                                }
+                                ++i;
+                            }
+                            break;
                         default:
                             this.sendResponse("Media Type not supported yet", 415);
                             break;
@@ -98,7 +126,7 @@ public class SimpleExchange {
     public String getRouteParam (int group_index) {
         Matcher m = Pattern.compile(this.regex_rota, Pattern.CASE_INSENSITIVE)
                 .matcher(this.exchange.getRequestURI().toString());
-        return m.matches() && m.groupCount() > group_index+1 ? m.group(group_index+1) : null;
+        return m.matches() && m.groupCount() >= group_index+1 ? m.group(group_index+1) : null;
     }
     
     public String getRouteParam (String group_name) {
